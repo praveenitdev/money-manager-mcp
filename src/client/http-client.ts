@@ -475,13 +475,18 @@ export class HttpClient {
   /** URL-encodes an object, skipping undefined/null values. */
   private toFormData(data?: Record<string, unknown>): string {
     if (!data) return "";
-    const params = new URLSearchParams();
+    // The phone's server percent-decodes bodies but does not turn "+" into a
+    // space, so URLSearchParams (space -> "+") stored literal "+" in text
+    // fields. Encode with encodeURIComponent (space -> "%20") instead.
+    const pairs: string[] = [];
     for (const [key, value] of Object.entries(data)) {
       if (value !== undefined && value !== null) {
-        params.append(key, toFormValue(value));
+        pairs.push(
+          `${encodeURIComponent(key)}=${encodeURIComponent(toFormValue(value))}`,
+        );
       }
     }
-    return params.toString();
+    return pairs.join("&");
   }
 
   /** Strips undefined values from a params object. */
